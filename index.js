@@ -41,11 +41,13 @@ app.post("/add", async (req,res) => {
 
   try {
     const result = await db.query(
-      "SELECT country_code FROM countries WHERE country_name = $1",
-      [input]
+      "SELECT country_code FROM countries WHERE LOWER(country_name) LIKE '%' || $1 || '%'",
+      [input.toLowerCase()]
     );
-    console.log(result.rows)
-    if (result.rows.length !== 0) {
+    
+    if (result.rows.length === 0) {
+      throw new Error("Country name does not exist");
+    }
       const data = result.rows[0];
       const countryCode = data.country_code;
       
@@ -57,17 +59,14 @@ app.post("/add", async (req,res) => {
       } catch (err) {
         console.log(err)
         const countries = await checkVisisted();
-        console.log("Step Outside 3")
         res.render("index.ejs", {
           countries: countries,
           total: countries.length,
           error: "Country has already been added, try again."
         })
       }
-    }
-    else {
-      throw new Error(a);
-    }
+    
+    
   } catch (err) {
     console.log(err)
     const countries = await checkVisisted();
